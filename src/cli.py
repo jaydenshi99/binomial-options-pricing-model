@@ -36,6 +36,8 @@ def main():
                        help='Number of time steps')
     parser.add_argument('--type', choices=['call', 'put'], default='call',
                        help='Option type')
+    parser.add_argument('--style', choices=['european', 'american'], default='european',
+                       help='Option style')
     
     args = parser.parse_args()
     
@@ -48,7 +50,8 @@ def main():
             r=args.r,
             sigma=args.sigma,
             n_steps=args.steps,
-            option_type=args.type
+            option_type=args.type,
+            option_style=args.style
         )
         
         # Display results

@@ -57,7 +57,8 @@ class BinomialModel:
         r: float,
         sigma: float,
         n_steps: int,
-        option_type: Literal['call', 'put'] = 'call'
+        option_type: Literal['call', 'put'] = 'call',
+        option_style: Literal['european', 'american'] = 'european'
     ):
         """
         Initialize the BinomialModel with the given parameters.
@@ -78,6 +79,8 @@ class BinomialModel:
             Number of time steps in the binomial tree
         option_type : str, optional
             Type of option: 'call' or 'put' (default: 'call')
+        option_style : str, optional
+            Style of option: 'european' or 'american' (default: 'european')
         
         Raises
         ------
@@ -85,7 +88,7 @@ class BinomialModel:
             If any parameter is invalid
         """
         # Validate inputs
-        self._validate_inputs(S0, K, T, r, sigma, n_steps, option_type)
+        self._validate_inputs(S0, K, T, r, sigma, n_steps, option_type, option_style)
         
         # Store basic parameters
         self.S0 = float(S0)
@@ -95,6 +98,7 @@ class BinomialModel:
         self.sigma = float(sigma)
         self.n_steps = int(n_steps)
         self.option_type = option_type.lower()
+        self.option_style = option_style.lower()
         
         # Calculate derived parameters
         self.dt = self.T / self.n_steps
@@ -126,7 +130,8 @@ class BinomialModel:
         r: float,
         sigma: float,
         n_steps: int,
-        option_type: str
+        option_type: str,
+        option_style: str
     ) -> None:
         """
         Validate input parameters.
@@ -164,6 +169,9 @@ class BinomialModel:
         
         if option_type.lower() not in ['call', 'put']:
             raise ValueError("Option type must be 'call' or 'put'")
+        
+        if option_style.lower() not in ['european', 'american']:
+            raise ValueError("Option style must be 'european' or 'american'")
     
     def get_model_info(self) -> dict:
         """
@@ -182,6 +190,7 @@ class BinomialModel:
             'sigma': self.sigma,
             'n_steps': self.n_steps,
             'option_type': self.option_type,
+            'option_style': self.option_style,
             'dt': self.dt,
             'u': self.u,
             'd': self.d,

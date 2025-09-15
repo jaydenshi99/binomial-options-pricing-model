@@ -52,6 +52,9 @@ def plot_binomial_tree(model, coordinates, max_nodes_to_show=50):
     max_nodes_to_show : int
         Maximum number of nodes to display (for performance)
     """
+    # Close any existing figures to prevent memory issues
+    plt.close('all')
+    
     fig, ax = plt.subplots(figsize=(12, 8))
     
     # Check if we should limit the display

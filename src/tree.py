@@ -119,7 +119,7 @@ class BinomialTree:
                     continue
                 
                 # Calculate expected value using risk-neutral probability
-                # Formula: C_{n,k} = (1/R) * [p*C_{n+1,k+1} + (1-p)*C_{n+1,k}]
+                # Formula: E[A_{n+1}] = (1/R) * [p*A_{n+1,k+1} + (1-p)*A_{n+1,k}]
                 # Where R = e^(r*dt), so 1/R = e^(-r*dt)
                 expected_value = (
                     self.model.p * up_child.option_price + 
@@ -129,7 +129,16 @@ class BinomialTree:
                 # Discount to present value: 1/R = e^(-r*dt)
                 import math
                 discount_factor = math.exp(-self.model.r * self.model.dt)
-                node.option_price = expected_value * discount_factor
+                holding_value = expected_value * discount_factor
+                
+                # For American options, compare holding value vs exercise value
+                if self.model.option_style == "american":
+                    exercise_value = node.get_exercise_value(self.model.K, option_type)
+                    # A_{n,k} = max(E[A_{n+1}], S_{n,k} - K)
+                    node.option_price = max(holding_value, exercise_value)
+                else:
+                    # European options: only holding value
+                    node.option_price = holding_value
     
     def get_option_price(self) -> float:
         """
