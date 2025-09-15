@@ -16,7 +16,26 @@ An interactive web application for visualizing and understanding the binomial op
 2. Create a virtual environment: `python3 -m venv .venv`
 3. Activate the environment: `source .venv/bin/activate`
 4. Install dependencies: `pip install -r requirements.txt`
-5. Run the Streamlit app: `streamlit run src/app.py`
+
+### Running the Application
+
+**Web Interface (Recommended):**
+```bash
+streamlit run src/app.py
+```
+
+**Command Line Interface:**
+```bash
+python src/cli.py --help
+python src/cli.py --S0 100 --K 105 --T 0.25 --r 0.05 --sigma 0.2 --steps 10 --type call
+```
+
+**Python Library:**
+```python
+from src.binomial_model import BinomialModel
+model = BinomialModel(S0=100, K=105, T=0.25, r=0.05, sigma=0.2, n_steps=10)
+print(model)
+```
 
 ## Project Structure
 
