@@ -21,7 +21,8 @@ An interactive web application for visualizing and understanding the binomial op
 
 **Web Interface (Recommended):**
 ```bash
-streamlit run src/app.py
+source .venv/bin/activate
+streamlit run src/tree_viz.py
 ```
 
 **Command Line Interface:**

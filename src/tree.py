@@ -5,7 +5,10 @@ Minimal implementation for managing nodes and calculations.
 """
 
 from typing import Dict, List, Tuple, Optional
-from .node import BinomialNode
+try:
+    from .node import BinomialNode
+except ImportError:
+    from node import BinomialNode
 
 
 class BinomialTree:
@@ -68,16 +71,22 @@ class BinomialTree:
                 self.nodes[(t, i)] = node
                 
                 # Set up parent-child relationships
-                if i < t:  # Has up parent
-                    up_parent = self.nodes[(t-1, i)]
-                    up_parent.up_child = node
-                    node.parent = up_parent
+                # Node (t, i) can be reached from two parents:
+                # - From (t-1, i): up movement -> this node is up_child
+                # - From (t-1, i-1): down movement -> this node is down_child
                 
-                if i > 0:  # Has down parent
-                    down_parent = self.nodes[(t-1, i-1)]
-                    down_parent.down_child = node
-                    if node.parent is None:  # Only set if not already set
-                        node.parent = down_parent
+                # Assign as down_child of (t-1, i) if i <= t-1
+                if i <= t-1:
+                    parent = self.nodes[(t-1, i)]
+                    parent.down_child = node
+                    node.parent = parent
+                
+                # Assign as up_child of (t-1, i-1) if i > 0
+                if i > 0:
+                    parent = self.nodes[(t-1, i-1)]
+                    parent.up_child = node
+                    if node.parent is None:  # Only set parent if not already set
+                        node.parent = parent
     
     def build_option_price_tree(self, option_type: str = None) -> None:
         """
@@ -110,16 +119,17 @@ class BinomialTree:
                     continue
                 
                 # Calculate expected value using risk-neutral probability
+                # Formula: C_{n,k} = (1/R) * [p*C_{n+1,k+1} + (1-p)*C_{n+1,k}]
+                # Where R = e^(r*dt), so 1/R = e^(-r*dt)
                 expected_value = (
                     self.model.p * up_child.option_price + 
                     self.model.q * down_child.option_price
                 )
                 
-                # Discount to present value using risk-free rate
+                # Discount to present value: 1/R = e^(-r*dt)
                 import math
-                discounted_value = expected_value * math.exp(-self.model.r * self.model.dt)
-                
-                node.option_price = discounted_value
+                discount_factor = math.exp(-self.model.r * self.model.dt)
+                node.option_price = expected_value * discount_factor
     
     def get_option_price(self) -> float:
         """

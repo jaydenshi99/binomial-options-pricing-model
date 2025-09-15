@@ -215,7 +215,10 @@ class BinomialModel:
     
     def build_stock_price_tree(self):
         """Build the stock price tree."""
-        from .tree import BinomialTree
+        try:
+            from .tree import BinomialTree
+        except ImportError:
+            from tree import BinomialTree
         
         if self.tree is None:
             self.tree = BinomialTree(self)
