@@ -1,0 +1,21 @@
+"""
+Binomial Options Pricing Model Package
+
+A comprehensive implementation of the binomial options pricing model
+with interactive visualization capabilities.
+"""
+
+__version__ = "0.1.0"
+__author__ = "Your Name"
+__email__ = "your.email@example.com"
+
+from .binomial_model import BinomialModel
+from .visualization import BinomialTreeVisualizer
+from .utils import calculate_greeks, validate_parameters
+
+__all__ = [
+    "BinomialModel",
+    "BinomialTreeVisualizer", 
+    "calculate_greeks",
+    "validate_parameters"
+]
