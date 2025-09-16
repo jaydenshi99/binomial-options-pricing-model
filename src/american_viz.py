@@ -1,7 +1,7 @@
 """
-American Options Visualization with Early Exercise Analysis
+American Options Visualisation with Early Exercise Analysis
 
-This creates a visualization showing American options pricing with
+This creates a visualisation showing American options pricing with
 early exercise decisions highlighted.
 """
 
@@ -21,7 +21,7 @@ plt.switch_backend('Agg')
 
 def calculate_node_coordinates(model):
     """
-    Calculate x, y coordinates for each node in the tree for visualization.
+    Calculate x, y coordinates for each node in the tree for visualisation.
     """
     coordinates = {}
     max_y_spread = model.n_steps / 2
@@ -40,7 +40,7 @@ def calculate_node_coordinates(model):
     
     return coordinates
 
-def plot_american_options_tree(model, coordinates, early_exercise_threshold=0.01):
+def plot_american_options_tree(model, coordinates):
     """
     Plot the binomial tree with early exercise decisions highlighted.
     """
@@ -110,9 +110,8 @@ def plot_american_options_tree(model, coordinates, early_exercise_threshold=0.01
                     # Add a small tolerance to avoid numerical precision issues
                     # Also require a minimum difference to avoid marking trivial cases
                     tolerance = 1e-6
-                    min_difference = early_exercise_threshold  # Use the threshold parameter
-                    is_early_exercise = (exercise_value > holding_value + tolerance and 
-                                       exercise_value - holding_value > min_difference)
+                    # Early exercise triggers whenever exercise value exceeds holding value
+                    is_early_exercise = (exercise_value > holding_value + tolerance)
                     
                     if is_early_exercise:
                         early_exercise_nodes.append((t, i))
@@ -195,7 +194,7 @@ def main():
     )
     
     st.title("🇺🇸 American Options Pricing Model")
-    st.markdown("**Visualization of American options with early exercise analysis**")
+    st.markdown("**Visualisation of American options with early exercise analysis**")
     
     # Sidebar for parameters
     st.sidebar.header("Model Parameters")
@@ -215,12 +214,8 @@ def main():
     show_comparison = st.sidebar.checkbox("Show European vs American Comparison", True)
     show_early_exercise = st.sidebar.checkbox("Highlight Early Exercise Nodes", True)
     
-    # Early exercise sensitivity
-    early_exercise_threshold = st.sidebar.slider(
-        "Early Exercise Threshold ($)", 
-        0.001, 0.10, 0.01, 0.001,
-        help="Minimum difference required to mark early exercise (higher = less sensitive)"
-    )
+    # Early exercise threshold fixed at 0 by design
+    early_exercise_threshold = 0.0
     
     try:
         # Model parameters
@@ -262,13 +257,13 @@ def main():
             with col1:
                 st.subheader("🇪🇺 European Options Tree")
                 coordinates_eu = calculate_node_coordinates(european_model)
-                fig_eu, _ = plot_american_options_tree(european_model, coordinates_eu, early_exercise_threshold)
+                fig_eu, _ = plot_american_options_tree(european_model, coordinates_eu)
                 st.pyplot(fig_eu)
             
             with col2:
                 st.subheader("🇺🇸 American Options Tree")
                 coordinates_us = calculate_node_coordinates(american_model)
-                fig_us, early_exercise_nodes = plot_american_options_tree(american_model, coordinates_us, early_exercise_threshold)
+                fig_us, early_exercise_nodes = plot_american_options_tree(american_model, coordinates_us)
                 st.pyplot(fig_us)
             
             # Early exercise analysis
@@ -325,7 +320,7 @@ def main():
             # Show tree
             st.subheader("🇺🇸 American Options Tree")
             coordinates = calculate_node_coordinates(american_model)
-            fig, early_exercise_nodes = plot_american_options_tree(american_model, coordinates, early_exercise_threshold)
+            fig, early_exercise_nodes = plot_american_options_tree(american_model, coordinates)
             st.pyplot(fig)
         
         # Model details
