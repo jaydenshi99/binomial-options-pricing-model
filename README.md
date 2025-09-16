@@ -22,42 +22,13 @@ An interactive web application for visualizing and understanding the binomial op
 **Web Interface (Recommended):**
 ```bash
 source .venv/bin/activate
-streamlit run src/tree_viz.py
+streamlit run src/visualisation.py
 ```
 
 **Command Line Interface:**
 ```bash
 python src/cli.py --help
 python src/cli.py --S0 100 --K 105 --T 0.25 --r 0.05 --sigma 0.2 --steps 10 --type call
-```
-
-**Python Library:**
-```python
-from src.binomial_model import BinomialModel
-model = BinomialModel(S0=100, K=105, T=0.25, r=0.05, sigma=0.2, n_steps=10)
-print(model)
-```
-
-## Project Structure
-
-```
-binomial-options-pricing-model/
-├── src/                    # Source code
-│   ├── binomial_model.py   # Core binomial model implementation
-│   ├── visualization.py    # Visualization functions
-│   ├── app.py             # Streamlit web application
-│   └── utils.py           # Utility functions
-├── notebooks/             # Jupyter notebooks for development
-├── tests/                 # Test files
-├── requirements.txt       # Python dependencies
-└── README.md             # This file
-```
-
-## Development
-
-To run tests:
-```bash
-pytest tests/
 ```
 
 To run the development server:
