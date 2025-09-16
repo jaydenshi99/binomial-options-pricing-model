@@ -68,8 +68,9 @@ def plot_american_options_tree(model, coordinates, early_exercise_threshold=0.01
             # Add up movement label
             mid_x = (x + up_child_coords[0]) / 2
             mid_y = (y + up_child_coords[1]) / 2
+            # Use a softer green for up moves
             ax.text(mid_x, mid_y + 0.1, '↑', ha='center', va='center', 
-                   fontsize=12, color='green', weight='bold', zorder=3)
+                   fontsize=12, color='#66BB6A', weight='bold', zorder=3)
         
         # Draw connection to down child
         if node.down_child:
@@ -80,8 +81,9 @@ def plot_american_options_tree(model, coordinates, early_exercise_threshold=0.01
             # Add down movement label
             mid_x = (x + down_child_coords[0]) / 2
             mid_y = (y + down_child_coords[1]) / 2
+            # Use a softer red for down moves
             ax.text(mid_x, mid_y - 0.1, '↓', ha='center', va='center', 
-                   fontsize=12, color='red', weight='bold', zorder=3)
+                   fontsize=12, color='#EF5350', weight='bold', zorder=3)
     
     # Draw nodes
     early_exercise_nodes = []
@@ -124,8 +126,8 @@ def plot_american_options_tree(model, coordinates, early_exercise_threshold=0.01
         
         # Node size and style based on state
         if is_early_exercise:
-            # Early exercise node (highlighted with red border)
-            circle = plt.Circle((x, y), 0.3, color=color, ec='red', linewidth=4, zorder=5)
+            # Early exercise node (highlighted with blue border, keep same size as regular)
+            circle = plt.Circle((x, y), 0.2, color=color, ec='#42A5F5', linewidth=3, zorder=5)
             ax.add_patch(circle)
         elif node.is_terminal():
             # Terminal node
@@ -158,12 +160,8 @@ def plot_american_options_tree(model, coordinates, early_exercise_threshold=0.01
     
     # Add legend
     legend_elements = [
-        plt.Line2D([0], [0], marker='o', color='w', markerfacecolor='lightgray', 
-                  markersize=10, label='Not calculated'),
-        plt.Line2D([0], [0], marker='o', color='w', markerfacecolor='green', 
-                  markersize=10, label='Calculated'),
-        plt.Line2D([0], [0], marker='o', color='w', markerfacecolor='red', 
-                  markersize=10, label='Early Exercise', markeredgecolor='red', markeredgewidth=2)
+        plt.Line2D([0], [0], marker='o', color='w', markerfacecolor='#BBDEFB', 
+                  markersize=10, label='Early Exercise', markeredgecolor='#42A5F5', markeredgewidth=2)
     ]
     ax.legend(handles=legend_elements, loc='upper right')
     
@@ -200,19 +198,15 @@ def main():
     st.markdown("**Visualization of American options with early exercise analysis**")
     
     # Sidebar for parameters
-    st.sidebar.header("🎛️ Model Parameters")
+    st.sidebar.header("Model Parameters")
     
-    col1, col2 = st.sidebar.columns(2)
-    
-    with col1:
-        S0 = st.slider("Initial Stock Price (S₀)", 50.0, 200.0, 100.0, 0.5)
-        K = st.slider("Strike Price (K)", 50.0, 200.0, 105.0, 0.5)
-        T = st.slider("Time to Maturity (T)", 0.1, 2.0, 0.25, 0.05)
-    
-    with col2:
-        r = st.slider("Risk-free Rate (r)", 0.01, 0.10, 0.05, 0.001, format="%.3f")
-        sigma = st.slider("Volatility (σ)", 0.05, 0.50, 0.20, 0.01, format="%.2f")
-        n_steps = st.slider("Time Steps (n)", 1, 10, 5, 1)
+    # Single-column inputs (to match tree_viz), remain in sidebar
+    S0 = st.sidebar.number_input("Initial Stock Price (S₀)", min_value=0.01, value=100.00, step=1.00, format="%.2f")
+    K = st.sidebar.number_input("Strike Price (K)", min_value=0.01, value=105.00, step=1.00, format="%.2f")
+    T = st.sidebar.number_input("Time to Maturity (T)", min_value=0.01, max_value=10.00, value=0.25, step=0.01, format="%.2f")
+    r = st.sidebar.number_input("Risk-free Rate (r)", min_value=0.000, max_value=1.000, value=0.050, step=0.001, format="%.3f")
+    sigma = st.sidebar.number_input("Volatility (σ)", min_value=0.010, max_value=2.000, value=0.200, step=0.010, format="%.3f")
+    n_steps = st.sidebar.slider("Number of Steps", 1, 10, 5, 1)
     
     option_type = st.sidebar.selectbox("Option Type", ["call", "put"])
     
@@ -279,18 +273,34 @@ def main():
             
             # Early exercise analysis
             if early_exercise_nodes:
-                st.subheader("⚡ Early Exercise Analysis")
-                st.write(f"**Nodes where early exercise is optimal:** {len(early_exercise_nodes)}")
-                
-                for t, i in early_exercise_nodes:
-                    node = american_model.tree.nodes[(t, i)]
-                    exercise_value = node.get_exercise_value(american_model.K, american_model.option_type)
-                    st.write(f"Node ({t},{i}): Stock=${node.stock_price:.2f}, "
-                            f"Exercise Value=${exercise_value:.2f}, "
-                            f"Option Price=${node.option_price:.2f}")
+                with st.expander("⚡ Early Exercise Analysis", expanded=False):
+                    st.caption(f"Nodes where early exercise is optimal: {len(early_exercise_nodes)}")
+                    
+                    # Compact table-style display
+                    rows = []
+                    for t, i in early_exercise_nodes:
+                        node = american_model.tree.nodes[(t, i)]
+                        exercise_value = node.get_exercise_value(american_model.K, american_model.option_type)
+                        rows.append({
+                            "Node": f"({t},{i})",
+                            "S": f"${node.stock_price:.2f}",
+                            "Exercise": f"${exercise_value:.2f}",
+                            "Option": f"${node.option_price:.2f}"
+                        })
+                    st.dataframe(rows, use_container_width=True, hide_index=True)
+                    
+                    # Optional deeper detail
+                    with st.expander("More detail", expanded=False):
+                        for t, i in early_exercise_nodes:
+                            node = american_model.tree.nodes[(t, i)]
+                            exercise_value = node.get_exercise_value(american_model.K, american_model.option_type)
+                            st.markdown(
+                                f"- Node ({t},{i}) • S=${node.stock_price:.2f} • "
+                                f"Exercise=${exercise_value:.2f} • Option=${node.option_price:.2f}"
+                            )
             else:
-                st.subheader("⚡ Early Exercise Analysis")
-                st.write("**No early exercise is optimal** - American option behaves like European option")
+                with st.expander("⚡ Early Exercise Analysis", expanded=False):
+                    st.write("No early exercise is optimal – American option behaves like European option")
         
         else:
             # Show only American model
@@ -326,7 +336,7 @@ def main():
                 st.json(american_model.get_model_info())
         
         # Early exercise explanation
-        with st.expander("📚 Early Exercise Theory"):
+        with st.expander("📚 Early Exercise Theory", expanded=False):
             st.markdown("""
             **American Options Early Exercise:**
             
