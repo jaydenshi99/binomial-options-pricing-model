@@ -435,28 +435,45 @@ def main():
         st.markdown("### Option Pricing")
         col1, col2, col3, col4 = st.columns(4)
         
-        # Use P&L-specific prices if in P&L mode, otherwise use main model prices
         if analysis_mode == "P&L Analysis" and pnl_params:
-            display_european_price = european_model.get_option_price()
-            display_american_price = american_model.get_option_price()
+            # In P&L mode, show all 4 option types
+            # Create models for both call and put options
+            call_model_params = model_params.copy()
+            call_model_params['option_type'] = 'call'
+            put_model_params = model_params.copy()
+            put_model_params['option_type'] = 'put'
+            
+            # Get all 4 option prices
+            eu_call_model, am_call_model, eu_call_price, am_call_price = compare_european_american(call_model_params)
+            eu_put_model, am_put_model, eu_put_price, am_put_price = compare_european_american(put_model_params)
+            
+            with col1:
+                st.metric("European Call", f"${eu_call_price:.4f}")
+            
+            with col2:
+                st.metric("European Put", f"${eu_put_price:.4f}")
+            
+            with col3:
+                st.metric("American Call", f"${am_call_price:.4f}")
+            
+            with col4:
+                st.metric("American Put", f"${am_put_price:.4f}")
         else:
-            display_european_price = european_price
-            display_american_price = american_price
-        
-        with col1:
-            st.metric("European Price", f"${display_european_price:.4f}")
-        
-        with col2:
-            st.metric("American Price", f"${display_american_price:.4f}")
-        
-        with col3:
-            early_exercise_premium = display_american_price - display_european_price
-            st.metric("Early Exercise Premium", f"${early_exercise_premium:.4f}")
-        
-        with col4:
-            if display_european_price > 0:
-                premium_pct = (early_exercise_premium / display_european_price) * 100
-                st.metric("Premium %", f"{premium_pct:.2f}%")
+            # In Theoretical Prices mode, show the original metrics
+            with col1:
+                st.metric("European Price", f"${european_price:.4f}")
+            
+            with col2:
+                st.metric("American Price", f"${american_price:.4f}")
+            
+            with col3:
+                early_exercise_premium = american_price - european_price
+                st.metric("Early Exercise Premium", f"${early_exercise_premium:.4f}")
+            
+            with col4:
+                if european_price > 0:
+                    premium_pct = (early_exercise_premium / european_price) * 100
+                    st.metric("Premium %", f"{premium_pct:.2f}%")
         
         # P&L Analysis metrics (only show when in P&L mode)
         if analysis_mode == "P&L Analysis" and pnl_params:
