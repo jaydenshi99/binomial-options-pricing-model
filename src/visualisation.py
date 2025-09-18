@@ -47,6 +47,7 @@ def calculate_pnl_at_node(node, entry_price, num_contracts, commission_per_contr
     
     Parameters:
     - position_direction: 1 for long, -1 for short
+    - option_type: 'call' or 'put' - determines the payoff structure
     """
     if node.option_price is None:
         return None
@@ -99,11 +100,14 @@ def plot_american_options_tree(model, coordinates, show_pnl=False, entry_price=N
             max_abs = max(abs(min_value), abs(max_value))
             min_value, max_value = -max_abs, max_abs
         
-        # P&L color scheme: Red (loss) → Yellow (breakeven) → Green (profit)
+        # P&L color scheme: Red (losses) → Green (profits) with gradients, no yellow/orange
         pnl_colors = [
-            '#DC2626',  # red for losses
-            '#F59E0B',  # amber for breakeven
-            '#10B981',  # green for profits
+            '#DC2626',  # dark red for high losses
+            '#EF4444',  # medium red for medium losses
+            '#F87171',  # light red for small losses
+            '#34D399',  # light green for small profits
+            '#10B981',  # medium green for medium profits
+            '#059669',  # dark green for high profits
         ]
         color_cmap = mcolors.LinearSegmentedColormap.from_list('pnl', pnl_colors, N=256)
     else:
@@ -115,15 +119,16 @@ def plot_american_options_tree(model, coordinates, show_pnl=False, entry_price=N
         else:
             min_value, max_value = min(all_option_prices), max(all_option_prices)
         
-        # Build a darker red→yellow→green colormap for dark backgrounds
-        dark_ryg_colors = [
-            '#8B1E1E',  # deep red
-            '#9A3412',  # deep orange
-            '#B45309',  # dark amber
-            '#166534',  # dark green
-            '#14532D',  # deeper green
+        # Use the same P&L color scheme for theoretical prices - pure red-green gradient
+        pnl_colors = [
+            '#DC2626',  # dark red for low values
+            '#EF4444',  # medium red for medium-low values
+            '#F87171',  # light red for small values
+            '#34D399',  # light green for medium-high values
+            '#10B981',  # medium green for high values
+            '#059669',  # dark green for highest values
         ]
-        color_cmap = mcolors.LinearSegmentedColormap.from_list('dark_ryg', dark_ryg_colors, N=256)
+        color_cmap = mcolors.LinearSegmentedColormap.from_list('pnl', pnl_colors, N=256)
 
     # Draw connections first - iterate through all nodes and draw connections to their children
     for (t, i), (x, y) in coordinates.items():
@@ -247,7 +252,7 @@ def plot_american_options_tree(model, coordinates, show_pnl=False, entry_price=N
     # Set title based on mode
     if show_pnl and entry_price is not None and num_contracts is not None and commission_per_contract is not None:
         ax.set_title(f"{model.option_style.title()} {model.option_type.title()} Options P&L Analysis\n"
-                    f"(Red=Loss, Yellow=Breakeven, Green=Profit)", 
+                    f"(Red=Losses, Green=Profits)", 
                     fontsize=16, weight='bold', pad=20, color='#e8eaed')
     else:
         ax.set_title(f"{model.option_style.title()} {model.option_type.title()} Options Pricing Model\n"
@@ -262,14 +267,12 @@ def plot_american_options_tree(model, coordinates, show_pnl=False, entry_price=N
     
     # Add legend based on mode
     if show_pnl and entry_price is not None and num_contracts is not None and commission_per_contract is not None:
-        # P&L legend
+        # P&L legend - only red and green
         legend_elements = [
             plt.Line2D([0], [0], marker='o', color='w', markerfacecolor='#DC2626', 
-                      markersize=10, label='Loss'),
-            plt.Line2D([0], [0], marker='o', color='w', markerfacecolor='#F59E0B', 
-                      markersize=10, label='Breakeven'),
+                      markersize=10, label='Losses'),
             plt.Line2D([0], [0], marker='o', color='w', markerfacecolor='#10B981', 
-                      markersize=10, label='Profit')
+                      markersize=10, label='Profits')
         ]
     else:
         # Early exercise legend
@@ -418,6 +421,15 @@ def main():
             pnl_params['entry_price'] = price_per_option * position_direction
             pnl_params['position_direction'] = position_direction
             pnl_params['option_type_for_pnl'] = option_type_for_pnl if position_type != "Custom" else option_type
+            
+            # Create P&L-specific models with the correct option type
+            pnl_model_params = model_params.copy()
+            pnl_model_params['option_type'] = option_type_for_pnl if position_type != "Custom" else option_type
+            pnl_european_model, pnl_american_model, _, _ = compare_european_american(pnl_model_params)
+            
+            # Use P&L-specific models for visualization
+            european_model = pnl_european_model
+            american_model = pnl_american_model
         
         # Display comparison results
         st.markdown("### Option Pricing")
@@ -549,34 +561,6 @@ def main():
         with st.expander("🔍 Model Details"):
             st.json(american_model.get_model_info())
         
-        # Early exercise explanation
-        with st.expander("📚 Early Exercise Theory", expanded=False):
-            st.markdown("""
-            **American Options Early Exercise:**
-            
-            American options can be exercised at any time before expiration, unlike European options
-            which can only be exercised at expiration.
-            
-            **Early Exercise Decision:**
-            At each node, we compare:
-            - **Holding Value**: Expected discounted value of continuing to hold the option
-            - **Exercise Value**: Immediate payoff from exercising the option
-            
-            **Formula:**
-            ```
-            A_{n,k} = max(E[A_{n+1}], S_{n,k} - K)
-            ```
-            
-            Where:
-            - `E[A_{n+1}]` = Expected value of holding the option
-            - `S_{n,k} - K` = Exercise value (for calls)
-            - `K - S_{n,k}` = Exercise value (for puts)
-            
-            **Key Insights:**
-            - **Call Options**: Rarely exercised early (no dividends)
-            - **Put Options**: Often exercised early when deep in-the-money
-            - **Early Exercise Premium**: Difference between American and European prices
-            """)
         
     except ValueError as e:
         st.error(f"❌ Parameter Error: {e}")
