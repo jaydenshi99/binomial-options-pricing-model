@@ -18,7 +18,6 @@ def main():
     )
     
     st.title("Binomial Options Pricing Model")
-    st.markdown("**Visualisation of European & American options with early exercise analysis**")
     
     # Sidebar
     with st.sidebar:

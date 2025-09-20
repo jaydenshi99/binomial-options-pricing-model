@@ -119,6 +119,10 @@ def plot_american_options_tree(model, coordinates, show_pnl=False, entry_price=N
         # Theoretical price mode
         all_option_prices = [node.option_price for node in all_nodes if node.option_price is not None]
         
+        # Find the root node price for reference
+        root_node = model.tree.nodes.get((0, 0))
+        root_price = root_node.option_price if root_node and root_node.option_price is not None else 0
+        
         if not all_option_prices:
             min_value, max_value = 0, 1
         else:
@@ -211,8 +215,22 @@ def plot_american_options_tree(model, coordinates, show_pnl=False, entry_price=N
         else:
             # Theoretical price mode
             if node.option_price is not None:
-                color_norm = (node.option_price - min_value) / (max_value - min_value + 1e-9)
-                color = color_cmap(color_norm)
+                # Root node is always neutral color (middle of gradient)
+                if t == 0 and i == 0:  # Root node
+                    color = color_cmap(0.5)  # Neutral color from existing gradient
+                else:
+                    # Color other nodes relative to root node
+                    if root_price > 0:
+                        relative_value = (node.option_price - root_price) / root_price
+                        # Clamp relative value to reasonable range
+                        relative_value = max(-1, min(1, relative_value))
+                        # Map to 0-1 range with 0.5 being neutral (same as root)
+                        color_norm = 0.5 + (relative_value * 0.5)
+                        color = color_cmap(color_norm)
+                    else:
+                        # Fallback if root price is 0
+                        color_norm = (node.option_price - min_value) / (max_value - min_value + 1e-9)
+                        color = color_cmap(color_norm)
             else:
                 color = 'lightgray'
         

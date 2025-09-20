@@ -49,7 +49,7 @@ def pnl_analysis_tab(model_params, show_intermediate):
                 price_per_option = st.number_input(
                     "Price per Option ($)", 
                     min_value=0.01, 
-                    value=theoretical_price, 
+                    value=round(theoretical_price, 2), 
                     step=0.01, 
                     help="Price you paid per option (positive for long, negative for short)"
                 )
