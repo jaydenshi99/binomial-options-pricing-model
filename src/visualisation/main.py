@@ -35,18 +35,14 @@ def main():
         sigma = st.number_input("Volatility (σ)", min_value=0.010, max_value=2.000, value=0.200, step=0.010, format="%.3f")
         n_steps = st.slider("Number of Steps", 1, 10, 4, 1)
         
-        # Option type (for Theoretical Prices tab)
-        option_type = st.selectbox("Option Type", ["call", "put"], index=1)
-    
-    # Model parameters for both tabs
+    # Model parameters for both tabs (option_type will be set individually in each tab)
     model_params = {
         'S0': S0,
         'K': K,
         'T': T,
         'r': r,
         'sigma': sigma,
-        'n_steps': n_steps,
-        'option_type': option_type
+        'n_steps': n_steps
     }
     
     # Create tabs

@@ -30,7 +30,7 @@ def pnl_analysis_tab(model_params, show_intermediate):
                 price_per_option = 0.01
                 num_options = 1
                 position_direction = 1  # Long
-                option_type_for_pnl = model_params['option_type']
+                option_type_for_pnl = 'call'  # Default to call for custom positions
             else:
                 # Determine position direction and option type
                 if "Long" in position_type:
@@ -79,7 +79,7 @@ def pnl_analysis_tab(model_params, show_intermediate):
         
         # Create P&L-specific models with the correct option type
         pnl_model_params = model_params.copy()
-        pnl_model_params['option_type'] = option_type_for_pnl if position_type != "Custom" else model_params['option_type']
+        pnl_model_params['option_type'] = option_type_for_pnl
         pnl_european_model, pnl_american_model, _, _ = compare_european_american(pnl_model_params)
         
         # Display all 4 option prices
